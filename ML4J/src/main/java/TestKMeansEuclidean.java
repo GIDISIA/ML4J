@@ -8,17 +8,17 @@ import org.nd4j.linalg.factory.Nd4j;
  *
  * @author ezequiel
  */
-public class TestKMeans {
+public class TestKMeansEuclidean {
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        new TestKMeans();
+        new TestKMeansEuclidean();
     }
 
-    public TestKMeans() {
-        INDArray dataset = Nd4j.rand(50, 1);
+    public TestKMeansEuclidean() {
+        INDArray dataset = Nd4j.rand(50, 10);
         System.out.println("Dataset generated");
         KMedoids kmediods = new KMedoids(5, 50, new EuclideanDistance());
         System.out.println("KMedoids instanciated");

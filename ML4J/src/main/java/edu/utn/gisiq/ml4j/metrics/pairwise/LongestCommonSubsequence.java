@@ -160,7 +160,7 @@ public class LongestCommonSubsequence implements DistanceMetric{
         //Make a permutation with repetitions 
         ICombinatoricsVector<Double> vector = createVector(paramInterval);
         Generator<Double> gen = createPermutationWithRepetitionGenerator(vector, dim);
-        if(parallel){
+        if(!parallel){
             // Serial execution
             //Make a vector for store results
             List<Double> s1Val = new ArrayList<>(paramInterval.size());

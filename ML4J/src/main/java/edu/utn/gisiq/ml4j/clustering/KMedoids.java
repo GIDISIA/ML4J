@@ -4,9 +4,10 @@ import edu.utn.gisiq.ml4j.metrics.pairwise.DistanceMetric;
 import edu.utn.gisiq.ml4j.metrics.pairwise.Pairwise;
 import edu.utn.gisiq.ml4j.random.MersenneTwisterFast;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
@@ -105,8 +106,11 @@ public class KMedoids {
              * go back to the Step 2.
              */
             assignments = assign(distMatrix);
+            System.out.println("Iteration "+iteration+" finish");
+            iteration++;
         }
         trained = true;
+        System.out.println("done");
     }
 
     private INDArray vj(INDArray dist, int n) {
@@ -159,7 +163,6 @@ public class KMedoids {
     private boolean recalculateMedoids(INDArray assignments, INDArray distMatrix) {
         boolean changed = false;
         INDArray oldMedoidsIdx = medoidsIdx.dup(); //Copy of the ndarray
-        Map<Integer, List<Integer>> points_cluster_idx = new HashMap<>();
         for (int i = 0; i < numberOfClusters; i++) {
             List<Integer> points_idx = new ArrayList<>();
             for (int j = 0; j < assignments.length(); j++) {
@@ -171,17 +174,24 @@ public class KMedoids {
                 medoidsIdx.putScalar(i, rg.nextInt(assignments.length()));
                 changed = true;
             } else {
-                double bestDistance = Double.MAX_VALUE;
-                for(int j=0;j<points_cluster_idx.size(); j++){
+                Map<Integer, Double> clusterDistance = new ConcurrentHashMap<>(points_idx.size());         
+                // Sumarization of distances for each point of the cluster to the others
+                IntStream.range(0, points_idx.size()).forEach(idx -> {
                     double distance = 0;
-                    for(int l=0;l<points_cluster_idx.size(); l++){
-                        distance += Math.abs(distMatrix.getDouble(j, l));
+                    for(int l=0;l<points_idx.size(); l++){
+                        distance += Math.abs(distMatrix.getDouble(idx, l));
                     }
-                    if(distance<bestDistance){
-                        bestDistance = distance;
+                    clusterDistance.put(idx, distance);
+                });
+                // Check witch clustes is the new medoid
+                double minTotalDistance = Double.MAX_VALUE;
+                for(int j=0;j<clusterDistance.keySet().size();j++){
+                    Double dist = clusterDistance.get(j);
+                    if(minTotalDistance > dist){
+                        minTotalDistance = dist;
                         medoidsIdx.putScalar(i, j);
                     }
-                }                
+                }
                 if(!oldMedoidsIdx.getScalar(i).equals(medoidsIdx.getScalar(i))) {
                     changed = true;
                 }
