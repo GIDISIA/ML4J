@@ -18,9 +18,15 @@ public class TestKMeansEuclidean {
     }
 
     public TestKMeansEuclidean() {
-        INDArray dataset = Nd4j.rand(50, 10);
+        INDArray dataset = Nd4j.rand(250, 5).mul(5);
+        INDArray dataset1 = Nd4j.rand(250, 5).mul(10);
+        dataset = Nd4j.vstack(dataset,dataset1);
+        INDArray dataset2 = Nd4j.rand(250, 5).mul(20);
+        dataset = Nd4j.vstack(dataset,dataset2);
+        INDArray dataset3 = Nd4j.rand(250, 5).mul(30);
+        dataset = Nd4j.vstack(dataset,dataset3);
         System.out.println("Dataset generated");
-        KMedoids kmediods = new KMedoids(5, 50, new EuclideanDistance());
+        KMedoids kmediods = new KMedoids(4, 50, new EuclideanDistance());
         System.out.println("KMedoids instanciated");
         kmediods.fit(dataset);
         System.out.println("KMedoids Fitted");
