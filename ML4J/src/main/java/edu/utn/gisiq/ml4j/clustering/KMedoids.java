@@ -3,11 +3,14 @@ package edu.utn.gisiq.ml4j.clustering;
 import edu.utn.gisiq.ml4j.metrics.pairwise.DistanceMetric;
 import edu.utn.gisiq.ml4j.metrics.pairwise.Pairwise;
 import edu.utn.gisiq.ml4j.random.MersenneTwisterFast;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
+import javax.swing.JFrame;
+import org.math.plot.Plot2DPanel;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
@@ -56,7 +59,7 @@ public class KMedoids {
         trained = false;
     }
 
-    public void fit(INDArray data) {
+    public void fit(INDArray data, boolean debug) {
         dataset = data.dup();
         int n_samples = data.rows();
         boolean changed = true;
@@ -89,6 +92,9 @@ public class KMedoids {
          * 1-5. Calculate the sum of distances from all objects to their
          * medoids.
          */
+        
+        if(debug)
+            this.printCurrentState("Iteration "+iteration);
 
         while (changed && iteration<maxIterations) {
             /**
@@ -108,6 +114,8 @@ public class KMedoids {
             assignments = assign(distMatrix);
             System.out.println("Iteration "+iteration+" finish");
             iteration++;
+            if(debug)
+                this.printCurrentState("Iteration "+iteration);
         }
         trained = true;
         System.out.println("done");
@@ -142,10 +150,7 @@ public class KMedoids {
                 double tmpDistance = distMatrix.getDouble(i, medoidsIdx.getInt(j));
                 if (tmpDistance < bestDistance) {
                     bestDistance = tmpDistance;
-                    out.putScalar(i, medoidsIdx.getInt(j));
-                    if (bestDistance == 0D) {
-                        break;
-                    }
+                    out.putScalar(i, medoidsIdx.getInt(j));                    
                 }
             }
         }
@@ -202,8 +207,33 @@ public class KMedoids {
     
     public INDArray getMedoids(){
         if(trained)
-            return dataset.get(medoidsIdx);
+            return dataset.getRows(medoidsIdx.toIntVector());
         return null;
+    }
+    
+    public void printCurrentState(String title){
+        double[] x = dataset.getColumn(0).toDoubleVector();
+        double[] y = dataset.getColumn(1).toDoubleVector();
+        // create your PlotPanel (you can use it as a JPanel)
+        Plot2DPanel plot = new Plot2DPanel();
+
+        // add a line plot to the PlotPanel
+        plot.addScatterPlot(
+                "Dataset", 
+                Color.BLUE, 
+                x, 
+                y);
+        plot.addScatterPlot(
+                "Medoids", 
+                Color.RED, 
+                dataset.getRows(medoidsIdx.toIntVector()).getColumn(0).toDoubleVector(),
+                dataset.getRows(medoidsIdx.toIntVector()).getColumn(1).toDoubleVector());
+
+        // put the PlotPanel in a JFrame, as a JPanel
+        JFrame frame = new JFrame(title);
+        frame.setSize(300, 300);
+        frame.setContentPane(plot);
+        frame.setVisible(true);
     }
 
 }
