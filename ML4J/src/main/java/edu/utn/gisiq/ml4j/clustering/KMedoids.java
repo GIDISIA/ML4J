@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.IntStream;
 import javax.swing.JFrame;
 import org.math.plot.Plot2DPanel;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -62,8 +61,8 @@ public class KMedoids {
     public void fit(INDArray data, boolean debug) {
         dataset = data.dup();
         int n_samples = data.rows();
-        boolean changed = true;
         int iteration = 1;
+        double prev_distortion = Double.MAX_VALUE;
         
         /**
          * Step 1: (Select initial medoids) 1-1. Calculate the distance between
@@ -92,30 +91,37 @@ public class KMedoids {
          * 1-5. Calculate the sum of distances from all objects to their
          * medoids.
          */
+        double distortion = calcDistortion(assignments, distMatrix);
         
         if(debug)
             this.printCurrentState("Iteration "+iteration);
 
-        while (changed && iteration<maxIterations) {
+        while (distortion < prev_distortion && iteration<maxIterations) {
+            prev_distortion = distortion;
             /**
              * Step 2: (Update medoids) Find a new medoid of each cluster, which
              * is the object minimizing the total distance to other objects in
              * its cluster. Update the current medoid in each cluster by
              * replacing with the new medoid.
              */
-            changed = recalculateMedoids(assignments, distMatrix);
+            recalculateMedoids(assignments, distMatrix);
             /**
              * Step 3: (Assign objects to medoids) 3-1. Assign each object to
-             * the nearest medoid and obtain the cluster result. 3-2. Calculate
-             * the sum of distance from all objects to their medoids. If the sum
-             * is equal to the previous one, then stop the algorithm. Otherwise,
-             * go back to the Step 2.
+             * the nearest medoid and obtain the cluster result. 
              */
             assignments = assign(distMatrix);
-            System.out.println("Iteration "+iteration+" finish");
+            /**
+             * 3-2. Calculate the sum of distance from all objects to their 
+             * medoids. If the sum is equal to the previous one, then stop the 
+             * algorithm. Otherwise, go back to the Step 2.
+             */           
+            distortion = calcDistortion(assignments, distMatrix);
             iteration++;
-            if(debug)
+            
+            if(debug){
+                System.out.println("Iteration "+iteration+" finish");
                 this.printCurrentState("Iteration "+iteration);
+            }    
         }
         trained = true;
         System.out.println("done");
@@ -165,9 +171,7 @@ public class KMedoids {
      * @param distMatrix
      * @return 
      */
-    private boolean recalculateMedoids(INDArray assignments, INDArray distMatrix) {
-        boolean changed = false;
-        INDArray oldMedoidsIdx = medoidsIdx.dup(); //Copy of the ndarray
+    private void recalculateMedoids(INDArray assignments, INDArray distMatrix) {
         for (int i = 0; i < numberOfClusters; i++) {
             List<Integer> points_idx = new ArrayList<>();
             for (int j = 0; j < assignments.length(); j++) {
@@ -175,34 +179,34 @@ public class KMedoids {
                     points_idx.add(j);
                 }
             }
-            if (points_idx.isEmpty()) { // new random, empty medoid
-                medoidsIdx.putScalar(i, rg.nextInt(assignments.length()));
-                changed = true;
-            } else {
-                Map<Integer, Double> clusterDistance = new ConcurrentHashMap<>(points_idx.size());         
-                // Sumarization of distances for each point of the cluster to the others
-                points_idx.forEach((j) -> {
-                    double distance = 0;
-                    for(int l=0;l<points_idx.size(); l++){
-                        distance += Math.abs(distMatrix.getDouble(j, l));
-                    }
-                    clusterDistance.put(j, distance);
-                });                
-                // Check witch clustes is the new medoid
-                double minTotalDistance = Double.MAX_VALUE;
-                for(Integer key : clusterDistance.keySet()){
-                    Double dist = clusterDistance.get(key);
-                    if(minTotalDistance > dist){
-                        minTotalDistance = dist;
-                        medoidsIdx.putScalar(i, key);
-                    }
+            Map<Integer, Double> clusterDistance = new ConcurrentHashMap<>(points_idx.size());         
+            // Sumarization of distances for each point of the cluster to the others
+            for(int j=0;j<points_idx.size();j++){
+                double distance = 0;
+                for(int l=0;l<points_idx.size(); l++){
+                    if(points_idx.get(j)!=points_idx.get(l))
+                        distance += Math.abs(distMatrix.getDouble(points_idx.get(j), points_idx.get(l)));
                 }
-                if(!oldMedoidsIdx.getScalar(i).equals(medoidsIdx.getScalar(i))) {
-                    changed = true;
+                clusterDistance.put(points_idx.get(j), distance);
+            }           
+            // Check witch clustes is the new medoid
+            double minTotalDistance = Double.MAX_VALUE;
+            for(Integer key : clusterDistance.keySet()){
+                Double dist = clusterDistance.get(key);
+                if(minTotalDistance > dist){
+                    minTotalDistance = dist;
+                    medoidsIdx.putScalar(i, key);
                 }
             }
         }
-        return changed;
+    }
+    
+    private double calcDistortion(INDArray assignments, INDArray distMatrix){
+        double distortion = 0;
+        for(int i=0;i<assignments.length();i++){
+            distortion += distMatrix.getDouble(i, assignments.getInt(i));
+        }
+        return distortion;
     }
     
     public INDArray getMedoids(){
