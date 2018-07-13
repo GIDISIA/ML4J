@@ -1,6 +1,8 @@
 
 import edu.utn.gisiq.ml4j.clustering.KMedoids;
 import edu.utn.gisiq.ml4j.metrics.pairwise.EuclideanDistance;
+import java.util.ArrayList;
+import java.util.List;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
@@ -8,17 +10,17 @@ import org.nd4j.linalg.factory.Nd4j;
  *
  * @author ezequiel
  */
-public class TestKMeansEuclidean {
+public class TestKMedoidsEuclidean {
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-//        new TestKMeansEuclidean(0);
-        new TestKMeansEuclidean(1);
+        new TestKMedoidsEuclidean(0);
+//        new TestKMedoidsEuclidean(1);
     }
 
-    public TestKMeansEuclidean(int test) {
+    public TestKMedoidsEuclidean(int test) {
         if(test==0)
             test0();
         if(test==1)
@@ -26,13 +28,13 @@ public class TestKMeansEuclidean {
     }
     
     private void test0(){
-        INDArray dataset = Nd4j.randn(50, 2);
-        INDArray dataset1 = Nd4j.randn(50, 2).add(-1);
-        dataset = Nd4j.vstack(dataset,dataset1);
-        INDArray dataset2 = Nd4j.randn(50, 2).add(2);
-        dataset = Nd4j.vstack(dataset,dataset2);
-        INDArray dataset3 = Nd4j.randn(50, 2).add(1);
-        dataset = Nd4j.vstack(dataset,dataset3);
+        List<INDArray> dataset = new ArrayList<>();
+        for(int i=0;i<50;i++){
+            dataset.add(Nd4j.randn(1, 2));
+            dataset.add(Nd4j.randn(1, 2).add(-1));
+            dataset.add(Nd4j.randn(1, 2).add(2));
+            dataset.add(Nd4j.randn(1, 2).add(1));
+        }
         System.out.println("Dataset generated");
         KMedoids kmediods = new KMedoids(4, 50, new EuclideanDistance());
         System.out.println("KMedoids instanciated");
@@ -67,13 +69,13 @@ public class TestKMeansEuclidean {
     }
     
     private void test1(){
-        INDArray dataset = Nd4j.randn(250, 2);
-        INDArray dataset1 = Nd4j.randn(250, 2).add(-1);
-        dataset = Nd4j.vstack(dataset,dataset1);
-        INDArray dataset2 = Nd4j.randn(250, 2).add(2);
-        dataset = Nd4j.vstack(dataset,dataset2);
-        INDArray dataset3 = Nd4j.randn(250, 2).add(1);
-        dataset = Nd4j.vstack(dataset,dataset3);
+        List<INDArray> dataset = new ArrayList<>();
+        for(int i=0;i<250;i++){
+            dataset.add(Nd4j.randn(1, 2));
+            dataset.add(Nd4j.randn(1, 2).add(-1));
+            dataset.add(Nd4j.randn(1, 2).add(2));
+            dataset.add(Nd4j.randn(1, 2).add(1));
+        }
         System.out.println("Dataset generated");
         KMedoids kmediods = new KMedoids(8, 50, new EuclideanDistance());
         System.out.println("KMedoids instanciated");

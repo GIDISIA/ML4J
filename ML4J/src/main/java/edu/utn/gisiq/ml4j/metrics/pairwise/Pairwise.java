@@ -1,5 +1,6 @@
 package edu.utn.gisiq.ml4j.metrics.pairwise;
 
+import java.util.List;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
@@ -14,7 +15,15 @@ public abstract class Pairwise {
         return pairwise(a, b, distanceMeasure);
     }
     
+    public static INDArray getDistance(List<INDArray> a, List<INDArray> b, DistanceMetric distanceMeasure) {
+        return pairwise(a, b, distanceMeasure);
+    }
+    
     public static INDArray getDistance(INDArray a, DistanceMetric distanceMeasure, boolean upperMatrix) {
+        return pairwise(a, distanceMeasure, upperMatrix);
+    }
+    
+    public static INDArray getDistance(List<INDArray> a, DistanceMetric distanceMeasure, boolean upperMatrix) {
         return pairwise(a, distanceMeasure, upperMatrix);
     }
      
@@ -26,6 +35,19 @@ public abstract class Pairwise {
         for (int i=0;i<n;i++) {
             for (int j=0;j<m;j++) {
                 distances.put(i, j, distanceMeasure.distance(a.getRow(i), b.getRow(j)));
+            }
+        }
+    	return distances;
+    }
+    
+    private static INDArray pairwise(List<INDArray> a, List<INDArray> b, DistanceMetric distanceMeasure) {
+        int n = a.size();
+        int m = b.size();
+        INDArray distances = Nd4j.zeros(n, m);
+
+        for (int i=0;i<n;i++) {
+            for (int j=0;j<m;j++) {
+                distances.put(i, j, distanceMeasure.distance(a.get(i), b.get(j)));
             }
         }
     	return distances;
@@ -63,6 +85,45 @@ public abstract class Pairwise {
         if (!upper) {
             for (int i=0;i<m;i++) {
                 distances.put(i, i, distanceMeasure.distance(a.getRow(i), a.getRow(i)));                
+            }
+
+        }
+
+        return distances;
+    }  
+    
+    private static INDArray pairwise(List<INDArray> a, DistanceMetric distanceMeasure, boolean upper) {
+        /*
+        * Don't need to check dims, because that happens in each
+        * getDistance call. Any non-uniformity should be handled 
+        * there.
+        */
+        final int m = a.size();
+        final INDArray distances = Nd4j.zeros(m, m);
+        double dist;
+
+        /*
+        * First loop: O(M choose 2). Do computations
+        */
+        for (int i=0;i<m-1;i++) {
+            for (int j=i+1;j<m;j++) {
+                dist = distanceMeasure.distance(a.get(i), a.get(j));
+                distances.put(i, j, dist);
+
+                // We want the full matrix
+                if (!upper) {
+                    distances.put(j, i, dist);
+                }
+            }
+        }
+
+        /*
+        *  If we want the full matrix, we need to compute the diagonal.
+        *  O(M) - Only the diagonal elements
+         */
+        if (!upper) {
+            for (int i=0;i<m;i++) {
+                distances.put(i, i, distanceMeasure.distance(a.get(i), a.get(i)));                
             }
 
         }

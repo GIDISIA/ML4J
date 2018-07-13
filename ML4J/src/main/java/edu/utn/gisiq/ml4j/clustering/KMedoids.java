@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.JFrame;
+import org.apache.commons.lang3.ArrayUtils;
 import org.math.plot.Plot2DPanel;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
@@ -33,8 +34,8 @@ public class KMedoids {
     /* The maximum number of iterations the algorithm is allowed to run. */
     private int maxIterations;
     //This are the fitted medoids idxs
-    private INDArray medoidsIdx;
-    private INDArray dataset;
+    private int[] medoidsIdx;
+    private List<INDArray> dataset;
     private boolean trained;
     
 
@@ -58,9 +59,9 @@ public class KMedoids {
         trained = false;
     }
 
-    public void fit(INDArray data, boolean debug) {
-        dataset = data.dup();
-        int n_samples = data.rows();
+    public void fit(List<INDArray> data, boolean debug) {
+        dataset = data;
+        int n_samples = data.size();
         int iteration = 1;
         double prev_distortion = Double.MAX_VALUE;
         
@@ -80,7 +81,7 @@ public class KMedoids {
          */
         //TODO wrong
         INDArray idx = Nd4j.sortWithIndices(vj.dup(), 1, true)[0];
-        medoidsIdx = idx.get(NDArrayIndex.interval(0, numberOfClusters));
+        medoidsIdx = idx.get(NDArrayIndex.interval(0, numberOfClusters)).toIntVector();
         /**
          * 1-4. Obtain the initial cluster result by assigning each object to
          * the nearest medoid.
@@ -126,7 +127,7 @@ public class KMedoids {
         trained = true;
         System.out.println("done");
     }
-
+    
     private INDArray vj(INDArray dist, int n) {
         INDArray out = Nd4j.zeros(n);
         for (int j = 0; j < n; j++) {
@@ -152,11 +153,11 @@ public class KMedoids {
         INDArray out = Nd4j.zeros(distMatrix.rows());
         for (int i = 0; i < distMatrix.rows(); i++) {
             double bestDistance = Double.MAX_VALUE;
-            for (int j = 0; j < medoidsIdx.length(); j++) {
-                double tmpDistance = distMatrix.getDouble(i, medoidsIdx.getInt(j));
+            for (int j = 0; j < medoidsIdx.length; j++) {
+                double tmpDistance = distMatrix.getDouble(i, medoidsIdx[j]);
                 if (tmpDistance < bestDistance) {
                     bestDistance = tmpDistance;
-                    out.putScalar(i, medoidsIdx.getInt(j));                    
+                    out.putScalar(i, medoidsIdx[j]);                    
                 }
             }
         }
@@ -175,7 +176,7 @@ public class KMedoids {
         for (int i = 0; i < numberOfClusters; i++) {
             List<Integer> points_idx = new ArrayList<>();
             for (int j = 0; j < assignments.length(); j++) {
-                if (assignments.getInt(j) == medoidsIdx.getInt(i)) {
+                if (assignments.getInt(j) == medoidsIdx[i]) {
                     points_idx.add(j);
                 }
             }
@@ -195,7 +196,7 @@ public class KMedoids {
                 Double dist = clusterDistance.get(key);
                 if(minTotalDistance > dist){
                     minTotalDistance = dist;
-                    medoidsIdx.putScalar(i, key);
+                    medoidsIdx[i] = key;
                 }
             }
         }
@@ -209,35 +210,67 @@ public class KMedoids {
         return distortion;
     }
     
-    public INDArray getMedoids(){
-        if(trained)
-            return dataset.getRows(medoidsIdx.toIntVector());
+    public List<INDArray> getMedoids(){
+        if(trained){
+            List<INDArray> out = new ArrayList<>();
+            for(int i=0;i<medoidsIdx.length;i++)
+                out.add(dataset.get(medoidsIdx[i]));
+            return out;
+        }
         return null;
     }
     
-    public void printCurrentState(String title){
-        double[] x = dataset.getColumn(0).toDoubleVector();
-        double[] y = dataset.getColumn(1).toDoubleVector();
+    public void printCurrentState(String title){        
         // create your PlotPanel (you can use it as a JPanel)
         Plot2DPanel plot = new Plot2DPanel();
+        if(dataset.get(0).isRowVectorOrScalar()){
+            double[][] x = new double[dataset.size()][dataset.get(0).length()];          
+            double[][] medoids = new double[medoidsIdx.length][dataset.get(0).getRow(0).length()];      
+            // fill x to for plotting
+            for(int i=0;i<dataset.size();i++){
+                double[] p = dataset.get(i).toDoubleVector();
+                for(int j=0;j<p.length;j++){
+                    x[i][j] = p[j];         
+                    if(j==1) 
+                        break;
+                }    
+            }
+            // fill medoids for plotting
+            for(int i=0;i<medoidsIdx.length;i++){
+                medoids[i] = x[medoidsIdx[i]];
+            }            
 
-        // add a line plot to the PlotPanel
-        plot.addScatterPlot(
-                "Dataset", 
-                Color.BLUE, 
-                x, 
-                y);
-        plot.addScatterPlot(
-                "Medoids", 
-                Color.RED, 
-                dataset.getRows(medoidsIdx.toIntVector()).getColumn(0).toDoubleVector(),
-                dataset.getRows(medoidsIdx.toIntVector()).getColumn(1).toDoubleVector());
+            // add a scatter plot to the PlotPanel
+            plot.addScatterPlot(
+                    "Dataset", 
+                    Color.BLUE, 
+                    x);
+            plot.addScatterPlot(
+                    "Medoids", 
+                    Color.RED, 
+                    medoids);
 
+            // put the PlotPanel in a JFrame, as a JPanel
+            JFrame frame = new JFrame(title);
+            frame.setSize(300, 300);
+            frame.setContentPane(plot);
+            frame.setVisible(true);
+        }else{
+            for(int i=0;i<dataset.size();i++){
+                double[][] x = dataset.get(i).toDoubleMatrix();
+                if(ArrayUtils.contains(medoidsIdx, i)){
+                    plot.addLinePlot("t"+i, Color.RED, x);
+                }else{
+                    plot.addLinePlot("t"+i, Color.BLUE, x);
+                }                
+            }
+        }
         // put the PlotPanel in a JFrame, as a JPanel
         JFrame frame = new JFrame(title);
         frame.setSize(300, 300);
         frame.setContentPane(plot);
         frame.setVisible(true);
+        
     }
 
 }
