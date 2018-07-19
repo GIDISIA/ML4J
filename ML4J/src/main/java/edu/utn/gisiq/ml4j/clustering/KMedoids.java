@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.JFrame;
 import org.apache.commons.lang3.ArrayUtils;
 import org.math.plot.Plot2DPanel;
+import org.math.plot.Plot3DPanel;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
@@ -60,6 +61,11 @@ public class KMedoids {
     }
 
     public void fit(List<INDArray> data, boolean debug) {
+        long startTime = System.currentTimeMillis();
+        
+        if(debug)
+            System.out.println("K-Medoids fitting initiation");
+        
         dataset = data;
         int n_samples = data.size();
         int iteration = 1;
@@ -70,6 +76,10 @@ public class KMedoids {
          * every pair of all objects based on the chosen dissimilarity measure.
          */
         INDArray distMatrix = Pairwise.getDistance(data, dm, false);
+        if(debug){
+            long distMatrixTime = System.currentTimeMillis();
+            System.out.println("K-Medoids distance matrix calculated in: "+(startTime-distMatrixTime)/1000000+" ms");            
+        }
         /**
          * 1-2. Calculate vj for object j as follows:
          * v_j=\sum_{i=1}^{n}\frac{d_{ij}}{\sum_{l=1}^{n}d_{il}}
@@ -86,7 +96,7 @@ public class KMedoids {
          * 1-4. Obtain the initial cluster result by assigning each object to
          * the nearest medoid.
          */
-        INDArray assignments = assign(distMatrix);
+        INDArray assignments = assign(distMatrix);        
         
         /**
          * 1-5. Calculate the sum of distances from all objects to their
@@ -120,7 +130,8 @@ public class KMedoids {
             iteration++;
             
             if(debug){
-                System.out.println("Iteration "+iteration+" finish");
+                long iterationTime = System.currentTimeMillis();
+                System.out.println("K-Medoids Iteration "+iteration+" finish in: "+(iterationTime-startTime)/1000000+" ms");      
                 this.printCurrentState("Iteration "+iteration);
             }    
         }
@@ -221,9 +232,9 @@ public class KMedoids {
     }
     
     public void printCurrentState(String title){        
-        // create your PlotPanel (you can use it as a JPanel)
-        Plot2DPanel plot = new Plot2DPanel();
+        // create your PlotPanel (you can use it as a JPanel)        
         if(dataset.get(0).isRowVectorOrScalar()){
+            Plot2DPanel plot = new Plot2DPanel();
             double[][] x = new double[dataset.size()][dataset.get(0).length()];          
             double[][] medoids = new double[medoidsIdx.length][dataset.get(0).getRow(0).length()];      
             // fill x to for plotting
@@ -249,27 +260,28 @@ public class KMedoids {
                     "Medoids", 
                     Color.RED, 
                     medoids);
-
             // put the PlotPanel in a JFrame, as a JPanel
             JFrame frame = new JFrame(title);
             frame.setSize(300, 300);
             frame.setContentPane(plot);
             frame.setVisible(true);
         }else{
+            Plot3DPanel plot = new Plot3DPanel();
             for(int i=0;i<dataset.size();i++){
-                double[][] x = dataset.get(i).toDoubleMatrix();
+                double[][] x = dataset.get(i).getColumns(new int[]{0,1,2}).toDoubleMatrix();
                 if(ArrayUtils.contains(medoidsIdx, i)){
-                    plot.addLinePlot("t"+i, Color.RED, x);
+                    plot.addLinePlot("t"+i, x);
                 }else{
                     plot.addLinePlot("t"+i, Color.BLUE, x);
                 }                
             }
+            // put the PlotPanel in a JFrame, as a JPanel
+            JFrame frame = new JFrame(title);
+            frame.setSize(300, 300);
+            frame.setContentPane(plot);
+            frame.setVisible(true);
         }
-        // put the PlotPanel in a JFrame, as a JPanel
-        JFrame frame = new JFrame(title);
-        frame.setSize(300, 300);
-        frame.setContentPane(plot);
-        frame.setVisible(true);
+        
         
     }
 

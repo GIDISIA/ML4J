@@ -8,6 +8,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.lang3.ArrayUtils;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
@@ -51,9 +52,16 @@ public class LongestCommonSubsequence implements DistanceMetric{
         if(A == null || B == null) return 0;
         int n = A.rows();
         int m = B.rows();
-        if(Math.abs(n-m) <= delta && epsilonValidation(A.getRow(n-1), B.getRow(m-1)))
-            return 1 + lcss(head(A), head(B));
-        return Math.max(lcss(head(A),B), lcss(A,head(B)));        
+        INDArray T = Nd4j.zeros(n+1, m+1);
+        for(int i=1;i<=n;i++){
+            for(int j=1;j<=m;j++){
+                if(Math.abs(i-j) <= delta && epsilonValidation(A.getRow(i-1), B.getRow(j-1)))
+                    T.putScalar(i, j, 1 + Math.max(T.getDouble(i-1, j), T.getDouble(i, j-1)));
+                else
+                    T.putScalar(i, j, Math.max(T.getDouble(i-1, j), T.getDouble(i, j-1)));
+            }
+        }        
+        return T.getDouble(n, m);
     }
     
     /**
@@ -97,7 +105,7 @@ public class LongestCommonSubsequence implements DistanceMetric{
      */
     private double s1(INDArray A, INDArray B){
         try {
-            return lcss(A,B)/Math.min(A.rows(), B.rows());
+            return lcss(A, B)/Math.min(A.rows(), B.rows());
         } catch (Exception ex) {
             Logger.getLogger(LongestCommonSubsequence.class.getName()).log(Level.SEVERE, null, ex);
             return 0d;
@@ -114,12 +122,13 @@ public class LongestCommonSubsequence implements DistanceMetric{
     private INDArray translate(INDArray X, Double[] translateValues) throws ArraysOfDifferentSizeException {
         if(X.getRow(0).length() != translateValues.length)
             throw new ArraysOfDifferentSizeException();
-        INDArray XX = Nd4j.zeros(X.rows(), translateValues.length);
-        for(int i=0;i<XX.rows();i++){
-            for(int j=0;j<XX.columns();j++){
-                XX.putScalar(i, j, X.getDouble(i, j)+translateValues[j]);                
-            }
-        }
+        System.out.println("Translation starts");
+        long start = System.currentTimeMillis();
+        INDArray XX = X.dup();
+        INDArray t = Nd4j.create(ArrayUtils.toPrimitive(translateValues));
+        XX.addRowVector(t);
+        long finish = System.currentTimeMillis();
+        System.out.println("Translation finish in "+(finish-start)/1000+" ms");
         return XX;
     }
     
@@ -163,7 +172,7 @@ public class LongestCommonSubsequence implements DistanceMetric{
         if(!parallel){
             // Serial execution
             //Make a vector for store results
-            List<Double> s1Val = new ArrayList<>(paramInterval.size());
+            List<Double> s1Val = new ArrayList<>();
             for (ICombinatoricsVector<Double> perm : gen) {
                 try {
                     s1Val.add(s1(A, translate(B, perm.getVector().toArray(new Double[perm.getVector().size()]))));
@@ -176,9 +185,16 @@ public class LongestCommonSubsequence implements DistanceMetric{
         }else{
             // Parallel execution
             final Queue<Double> s1Val = new ConcurrentLinkedQueue<>();
+            List<List<Double>> permutations = new ArrayList<>();
             gen.forEach((item)-> {
+               permutations.add(item.getVector());
+            });
+            permutations.parallelStream().forEach((item)->{
                 try {
-                    s1Val.add(s1(A, translate(B, item.getVector().toArray(new Double[item.getVector().size()]))));
+                    INDArray BTranslated = translate(B, item.toArray(new Double[item.size()]));
+                    System.out.println("Translated");
+                    s1Val.add(s1(A, BTranslated));
+                    System.out.println("S1 calculated");
                 } catch (Exception ex) {
                     Logger.getLogger(LongestCommonSubsequence.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -211,7 +227,7 @@ public class LongestCommonSubsequence implements DistanceMetric{
     @Override
     public double distance(INDArray a, INDArray b) {
         if(distance2)
-            return this.d2(a, b, true);
+            return this.d2(a, b, false);
         return this.d1(a, b);        
     }
 
@@ -221,4 +237,5 @@ public class LongestCommonSubsequence implements DistanceMetric{
             return this.as2(a, b, true);
         return this.s1(a, b);        
     }
+    
 }

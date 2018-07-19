@@ -1,6 +1,7 @@
 package edu.utn.gisiq.ml4j.metrics.pairwise;
 
 import java.util.List;
+import java.util.stream.IntStream;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
@@ -99,33 +100,32 @@ public abstract class Pairwise {
         * there.
         */
         final int m = a.size();
-        final INDArray distances = Nd4j.zeros(m, m);
-        double dist;
+        final INDArray distances = Nd4j.zeros(m, m);        
 
         /*
         * First loop: O(M choose 2). Do computations
         */
-        for (int i=0;i<m-1;i++) {
-            for (int j=i+1;j<m;j++) {
-                dist = distanceMeasure.distance(a.get(i), a.get(j));
-                distances.put(i, j, dist);
 
+        IntStream.range(0, m).parallel().forEach(i -> {
+            for (int j=i+1;j<m;j++) {
+                double dist = distanceMeasure.distance(a.get(i), a.get(j));
+                distances.put(i, j, dist);
                 // We want the full matrix
                 if (!upper) {
                     distances.put(j, i, dist);
                 }
+                System.out.println("Distance for point ("+i+","+j+") calculated");
             }
-        }
+        });        
 
         /*
         *  If we want the full matrix, we need to compute the diagonal.
         *  O(M) - Only the diagonal elements
          */
         if (!upper) {
-            for (int i=0;i<m;i++) {
-                distances.put(i, i, distanceMeasure.distance(a.get(i), a.get(i)));                
-            }
-
+            IntStream.range(0, m).parallel().forEach(i -> {
+                distances.put(i, i, 0D);          
+            });
         }
 
         return distances;
