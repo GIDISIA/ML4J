@@ -1,3 +1,5 @@
+package test;
+
 
 import javax.swing.JFrame;
 import org.apache.commons.math3.random.MersenneTwister;

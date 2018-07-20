@@ -1,3 +1,5 @@
+package test;
+
 
 import edu.utn.gisiq.ml4j.clustering.KMedoids;
 import edu.utn.gisiq.ml4j.metrics.pairwise.EuclideanDistance;
