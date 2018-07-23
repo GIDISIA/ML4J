@@ -38,6 +38,7 @@ public class KMedoids {
     private int[] medoidsIdx;
     private List<INDArray> dataset;
     private boolean trained;
+    private INDArray distMatrix; // Distance matrix
     
 
     /**
@@ -58,6 +59,7 @@ public class KMedoids {
         this.dm = dm;
         rg = new MersenneTwisterFast(System.currentTimeMillis());
         trained = false;
+        distMatrix = null;
     }
 
     public void fit(List<INDArray> data, boolean debug) {
@@ -75,23 +77,33 @@ public class KMedoids {
          * Step 1: (Select initial medoids) 1-1. Calculate the distance between
          * every pair of all objects based on the chosen dissimilarity measure.
          */
-        INDArray distMatrix = Pairwise.getDistance(data, dm, false);
+        if(distMatrix == null){
+            distMatrix = Pairwise.getDistance(data, dm, false);
+        }else{
+            // if k-medoids was trained before, use incremetal distance matrix            
+            distMatrix = Pairwise.getDistanceIncremental(data, distMatrix, dm, false);
+        }
+        
         if(debug){
             long distMatrixTime = System.currentTimeMillis();
             System.out.println("K-Medoids distance matrix calculated in: "+(startTime-distMatrixTime)/1000000+" ms");            
         }
-        /**
-         * 1-2. Calculate vj for object j as follows:
-         * v_j=\sum_{i=1}^{n}\frac{d_{ij}}{\sum_{l=1}^{n}d_{il}}
-         */
-        INDArray vj = this.vj(distMatrix, n_samples);
-        /**
-         * 1-3. Sort vj’s in ascending order. Select k objects having the first
-         * k smallest values as initial medoids.
-         */
-        //TODO wrong
-        INDArray idx = Nd4j.sortWithIndices(vj.dup(), 1, true)[0];
-        medoidsIdx = idx.get(NDArrayIndex.interval(0, numberOfClusters)).toIntVector();
+        
+        if(medoidsIdx == null){
+            /**
+             * 1-2. Calculate vj for object j as follows:
+             * v_j=\sum_{i=1}^{n}\frac{d_{ij}}{\sum_{l=1}^{n}d_{il}}
+             */
+            INDArray vj = this.vj(distMatrix, n_samples);
+            /**
+             * 1-3. Sort vj’s in ascending order. Select k objects having the first
+             * k smallest values as initial medoids.
+             */
+            //TODO wrong
+            INDArray idx = Nd4j.sortWithIndices(vj.dup(), 1, true)[0];
+            medoidsIdx = idx.get(NDArrayIndex.interval(0, numberOfClusters)).toIntVector();
+        }
+        
         /**
          * 1-4. Obtain the initial cluster result by assigning each object to
          * the nearest medoid.
