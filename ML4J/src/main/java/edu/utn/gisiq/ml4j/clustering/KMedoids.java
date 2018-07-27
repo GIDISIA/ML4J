@@ -15,6 +15,7 @@ import org.math.plot.Plot3DPanel;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
+import org.nd4j.linalg.io.CollectionUtils;
 
 /**
  *
@@ -39,7 +40,7 @@ public class KMedoids {
     private List<INDArray> dataset;
     private boolean trained;
     private INDArray distMatrix; // Distance matrix
-    
+    private INDArray assignments;    
 
     /**
      * Creates a new instance of the k-medoids algorithm with the specified
@@ -116,7 +117,7 @@ public class KMedoids {
          * 1-4. Obtain the initial cluster result by assigning each object to
          * the nearest medoid.
          */
-        INDArray assignments = assign(distMatrix);        
+        assignments = assign(distMatrix);        
         
         /**
          * 1-5. Calculate the sum of distances from all objects to their
@@ -249,6 +250,21 @@ public class KMedoids {
             return out;
         }
         return null;
+    }
+    
+    public int[] getMedoidsIdx(){
+        if(trained)
+            return medoidsIdx;
+        return null;
+    }
+    
+    public int[] getAssignationsToMedoid(int medoidIdx){
+        List<Integer> assign = new ArrayList<>();
+        for(int i=0;i<assignments.length();i++){
+            if(assignments.getInt(i)==medoidIdx)
+                assign.add(i);
+        }
+        return assign.stream().mapToInt(i->i).toArray();
     }
     
     public void printCurrentState(String title){        
