@@ -61,6 +61,14 @@ public class KMedoids {
         trained = false;
         distMatrix = null;
     }
+    
+    public void fit(List<INDArray> data, Integer numberOfClusters, boolean debug){
+        if((numberOfClusters != null) && (numberOfClusters != this.numberOfClusters)){
+            this.numberOfClusters = numberOfClusters;
+            this.medoidsIdx = null;
+        }
+        this.fit(data, debug);
+    }
 
     public void fit(List<INDArray> data, boolean debug) {
         long startTime = System.currentTimeMillis();
