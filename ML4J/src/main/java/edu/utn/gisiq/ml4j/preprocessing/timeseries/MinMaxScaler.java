@@ -9,16 +9,20 @@ import org.nd4j.linalg.factory.Nd4j;
  * Standard scaler for time series
  * @author Ezequiel Beccaría
  */
-public class StandardScaler implements TimeSeriesScaler{
+public class MinMaxScaler implements TimeSeriesScaler{
     private boolean fitted;
-    private INDArray mean;
-    private INDArray std;
+    private INDArray min;
+    private INDArray max;
 
-    public StandardScaler() {
+    public MinMaxScaler() {
         super();
         fitted = false;
     }
     
+    /**
+     *
+     * @param series
+     */
     @Override
     public void fit(List<INDArray> series){
         if(series != null && !series.isEmpty()){
@@ -27,8 +31,8 @@ public class StandardScaler implements TimeSeriesScaler{
                 a = Nd4j.vstack(a, series.get(i));
             }
             
-            mean = a.mean(0);
-            std = a.std(0);
+            min = a.min(0);
+            max = a.max(0);
             
             fitted = true;
         }
@@ -39,7 +43,7 @@ public class StandardScaler implements TimeSeriesScaler{
         if(fitted){
             List<INDArray> transformed = new ArrayList<>();
             for(INDArray serie : series){
-                INDArray t = serie.sub(mean).div(std);
+                INDArray t = serie.sub(min).div(max.sub(min));
                 transformed.add(t);
             }      
             return transformed;
