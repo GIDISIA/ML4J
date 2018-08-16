@@ -18,6 +18,15 @@ public class MinMaxScaler implements Scaler {
         fitted = false;
     }
 
+    public MinMaxScaler(INDArray min, INDArray max) {
+        this.min = min;
+        this.max = max;
+        
+        fitted = true;
+    }
+    
+    
+
     @Override
     public void fit(INDArray data) {
         if (data != null) {
