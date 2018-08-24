@@ -19,6 +19,13 @@ public class TSMinMaxScaler implements TSScaler{
         fitted = false;
     }
     
+    public TSMinMaxScaler(INDArray min, INDArray max) {
+        this.min = min;
+        this.max = max;
+        
+        fitted = true;
+    }
+    
     /**
      *
      * @param series
