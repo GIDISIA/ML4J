@@ -12,7 +12,15 @@ public interface Policy {
      * Method that return the index of the List given a implemented policy choose
      * algorithm.
      * @param qValues
+     * @param episode
      * @return 
      */
-    public int chooseAction(INDArray qValues);
+    public int chooseAction(INDArray qValues, int episode);
+    
+    /**
+     * Method used for calculations after the ending of the episode.
+     * This method can be used, for example, to update epsilon value after the 
+     * ending of the episode in e-greedy kind of policy choosing algorithms.
+     */
+    public void finishedEpisode();
 }

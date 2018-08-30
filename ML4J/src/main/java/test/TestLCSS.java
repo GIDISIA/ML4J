@@ -2,9 +2,6 @@ package test;
 
 
 import edu.utn.gisiq.ml4j.metrics.pairwise.LongestCommonSubsequence;
-import edu.utn.gisiq.ml4j.metrics.pairwise.LongestCommonSubsequence;
-import java.util.ArrayList;
-import java.util.List;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
@@ -33,7 +30,7 @@ public class TestLCSS {
        
         int delta = (int) (((a.rows()+b.rows())/2)*0.25); //set delta as 25% of the average length
         
-        LongestCommonSubsequence lcss = new LongestCommonSubsequence(delta, 0.5, 0, false);
+        LongestCommonSubsequence lcss = new LongestCommonSubsequence(delta, 0.5, 0, false, null);
        
         long start = System.currentTimeMillis();
         double dist = lcss.distance(a, b);

@@ -45,7 +45,7 @@ public class TestKMedoidsLCSS {
         }
         int delta = (int) (5 * (50 + 20 + 100 + 10) / dataset.size() * 0.25);
         System.out.println("Dataset generated");
-        KMedoids kmediods = new KMedoids(2, 50, new LongestCommonSubsequence(delta, 0.1, 0.1, false));
+        KMedoids kmediods = new KMedoids(2, 50, new LongestCommonSubsequence(delta, 0.1, 0.1, false, null));
         System.out.println("KMedoids instanciated");
         kmediods.fit(dataset, true);
         System.out.println("KMedoids Fitted");
@@ -107,7 +107,7 @@ public class TestKMedoidsLCSS {
         }
         double delta = sum/tss.size()*0.25;
         
-        KMedoids kmediods = new KMedoids(5, 50, new LongestCommonSubsequence(delta, 0.2, 0.1, false));
+        KMedoids kmediods = new KMedoids(5, 50, new LongestCommonSubsequence(delta, 0.2, 0.1, false, null));
         
         long start = System.currentTimeMillis();
         kmediods.fit(tss.subList(0, 50), true);

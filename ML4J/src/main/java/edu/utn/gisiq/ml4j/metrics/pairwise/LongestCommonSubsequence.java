@@ -23,22 +23,31 @@ import org.paukov.combinatorics.ICombinatoricsVector;
  * @author Ezequiel Beccaría
  */
 public class LongestCommonSubsequence implements DistanceMetric{
-    private double delta;
-    private double epsilon;
-    private double beta;
-    private boolean distance2;
+    private final double delta;
+    private final double epsilon;
+    private final double beta;
+    private final boolean distance2;
+    private final Integer timeIdx;
 
     /**
      * Constructor. Delta, beta and epsilon variables must be provided.
-     * @param delta is the time error allowed to compare two point of time series
-     * @param epsilon is the error allowed to compare two point of time series per dimension
+     * @param delta is the time error allowed to compare two point of time 
+     * series
+     * @param epsilon is the error allowed to compare two point of time series 
+     * per dimension
      * @param beta is AS2 distances aproximation constant
+     * @param distance2 if true, then use AS2 as distance metric
+     * @param timeIdx if null, the time series were sampled at regular time 
+     * intervals. If not null, time series sample time is get from index timeIdx
+     * of each point (e.g. A[0][timeIdx], ..., A[n][timeIdx])
+     *      
      */
-    public LongestCommonSubsequence(double delta, double epsilon, double beta, boolean distance2) {
+    public LongestCommonSubsequence(double delta, double epsilon, double beta, boolean distance2, Integer timeIdx) {
         this.delta = delta;
         this.epsilon = epsilon;
         this.beta = beta;
         this.distance2 = distance2;
+        this.timeIdx = timeIdx;
     }
     
     /**
@@ -55,10 +64,19 @@ public class LongestCommonSubsequence implements DistanceMetric{
         INDArray T = Nd4j.zeros(n+1, m+1);
         for(int i=1;i<=n;i++){
             for(int j=1;j<=m;j++){
-                if(Math.abs(i-j) <= delta && epsilonValidation(A.getRow(i-1), B.getRow(j-1)))
-                    T.putScalar(i, j, 1 + Math.max(T.getDouble(i-1, j), T.getDouble(i, j-1)));
-                else
-                    T.putScalar(i, j, Math.max(T.getDouble(i-1, j), T.getDouble(i, j-1)));
+                if(this.timeIdx == null){
+                    // if time series were sampled at regular interval of time
+                    if(Math.abs(i-j) <= delta && epsilonValidation(A.getRow(i-1), B.getRow(j-1)))
+                        T.putScalar(i, j, 1 + Math.max(T.getDouble(i-1, j), T.getDouble(i, j-1)));
+                    else
+                        T.putScalar(i, j, Math.max(T.getDouble(i-1, j), T.getDouble(i, j-1)));
+                }else{
+                    // if time series were not sampled at regular interval of time
+                    if(Math.abs(A.getDouble(i-1, timeIdx)-B.getDouble(j-1, timeIdx)) <= delta && epsilonValidation(A.getRow(i-1), B.getRow(j-1)))
+                        T.putScalar(i, j, 1 + Math.max(T.getDouble(i-1, j), T.getDouble(i, j-1)));
+                    else
+                        T.putScalar(i, j, Math.max(T.getDouble(i-1, j), T.getDouble(i, j-1)));
+                }
             }
         }        
         return T.getDouble(n, m);
@@ -80,6 +98,8 @@ public class LongestCommonSubsequence implements DistanceMetric{
     /**
      * Method that validate if each component of the last point of each 
      * time series is not *epsilon* far away each other. 
+     * If timeIdx is setting, this method will ignore timeIdx index value for 
+     * comparation.
      * @param A
      * @param B
      * @return 
@@ -88,12 +108,21 @@ public class LongestCommonSubsequence implements DistanceMetric{
         if(!(A.isVector()&&B.isVector()))
             throw new Exception("A and B must be a vector.");
         boolean flag = true;
-        for(int i=0;i<A.length();i++){
-            if(Math.abs(A.getDouble(i)-B.getDouble(i)) >= epsilon){
-                flag = false;
-                break;
-            }
-        }        
+        if(timeIdx==null){
+            for(int i=0;i<A.length();i++){            
+                if(Math.abs(A.getDouble(i)-B.getDouble(i)) >= epsilon){
+                    flag = false;
+                    break;
+                }
+            }      
+        }else{
+            for(int i=0;i<A.length();i++){            
+                if(i!=timeIdx && Math.abs(A.getDouble(i)-B.getDouble(i)) >= epsilon){
+                    flag = false;
+                    break;
+                }
+            }   
+        }    
         return flag;
     }
     

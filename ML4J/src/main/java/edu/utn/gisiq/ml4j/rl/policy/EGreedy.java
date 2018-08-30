@@ -12,23 +12,24 @@ import org.nd4j.linalg.factory.Nd4j;
  */
 public class EGreedy implements Policy{
     private final MersenneTwisterFast mt;
-    private final double finalEpsilon;
-    private final double stepEpsilon;
-    private double currentEpsilon;
+    private final double epsilonMin;
+    private final double epsilonDecay;
+    private double epsilon;
 
-    public EGreedy(double initialEpsilon, double finalEpsilon, double stepEpsilon) {
-        this.currentEpsilon = initialEpsilon;
-        this.finalEpsilon = finalEpsilon;
-        this.stepEpsilon = stepEpsilon;
+    public EGreedy(double initialEpsilon, double epsilonMin, double epsilonDecay) {
+        this.epsilon = initialEpsilon;
+        this.epsilonMin = epsilonMin;
+        this.epsilonDecay = epsilonDecay;
         mt = new MersenneTwisterFast();
     }
     
     @Override
-    public int chooseAction(INDArray qValues) {
+    public int chooseAction(INDArray qValues, int episode) {
         int rta = -1;
         int idx = Nd4j.getExecutioner().execAndReturn(new IMax(qValues)).getFinalResult();
+        double e = Math.max(epsilonMin, Math.min(epsilon, 1.0 - Math.log10((episode + 1) * epsilonDecay)));
         
-        if(mt.nextDouble()<=currentEpsilon){
+        if(mt.nextDouble()<=e){
             //explore
             rta = mt.nextInt(qValues.length()-1);
             if(rta == idx)
@@ -37,16 +38,15 @@ public class EGreedy implements Policy{
             //explote
             rta = idx;
         }
-        
-        currentEpsilon = nextEpsilon();
             
         return rta;
     }
     
-    private double nextEpsilon(){
-        if(stepEpsilon > 0 && currentEpsilon < finalEpsilon) return currentEpsilon+stepEpsilon; 
-        if(stepEpsilon < 0 && currentEpsilon > finalEpsilon) return currentEpsilon+stepEpsilon; 
-        return currentEpsilon; //fixed epsilon
+    @Override
+    public void finishedEpisode() {
+        // Update episilon value after episode ending
+        if(epsilon > epsilonMin)
+            epsilon *= epsilonDecay;        
     }
     
 }
