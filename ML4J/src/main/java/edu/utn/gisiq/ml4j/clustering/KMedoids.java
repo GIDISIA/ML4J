@@ -160,7 +160,7 @@ public class KMedoids {
             }    
         }
         trained = true;
-        System.out.println("done");
+//        System.out.println("done");
     }
     
     private INDArray vj(INDArray dist, int n) {

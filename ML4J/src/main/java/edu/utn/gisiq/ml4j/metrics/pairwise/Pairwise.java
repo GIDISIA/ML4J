@@ -254,7 +254,7 @@ public abstract class Pairwise {
                 if (!upper) {
                     distances.put(j, i, dist);
                 }
-                System.out.println("Distance for point ("+i+","+j+") calculated");
+//                System.out.println("Distance for point ("+i+","+j+") calculated");
             }
         });        
 
