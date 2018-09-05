@@ -10,13 +10,13 @@ import org.nd4j.linalg.factory.Nd4j;
  * For fixed epsilon, must set stepEpsion equals to zero.
  * @author Ezequiel Beccaria
  */
-public class EGreedy implements Policy{
+public class EGreedyExponentialDecay implements Policy{
     private final MersenneTwisterFast mt;
     private final double epsilonMin;
     private final double epsilonDecay;
     private double epsilon;
 
-    public EGreedy(double initialEpsilon, double epsilonMin, double epsilonDecay) {
+    public EGreedyExponentialDecay(double initialEpsilon, double epsilonMin, double epsilonDecay) {
         this.epsilon = initialEpsilon;
         this.epsilonMin = epsilonMin;
         this.epsilonDecay = epsilonDecay;
@@ -27,7 +27,7 @@ public class EGreedy implements Policy{
     public int chooseAction(INDArray qValues, int episode) {
         int rta = -1;
         int idx = Nd4j.getExecutioner().execAndReturn(new IMax(qValues)).getFinalResult();
-        double e = Math.max(epsilonMin, Math.min(epsilon, 1.0 - Math.log10((episode + 1) * epsilonDecay)));
+        double e = Math.max(epsilonMin, epsilon*Math.exp(-epsilonDecay*episode));
         
         if(mt.nextDouble()<=e){
             //explore
@@ -44,9 +44,6 @@ public class EGreedy implements Policy{
     
     @Override
     public void finishedEpisode() {
-        // Update episilon value after episode ending
-        if(epsilon > epsilonMin)
-            epsilon *= epsilonDecay;        
     }
     
 }
