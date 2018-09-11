@@ -3,6 +3,7 @@ package edu.utn.gisiq.ml4j.clustering;
 import edu.utn.gisiq.ml4j.metrics.pairwise.DistanceMetric;
 import edu.utn.gisiq.ml4j.metrics.pairwise.Pairwise;
 import edu.utn.gisiq.ml4j.random.MersenneTwisterFast;
+import edu.utn.gisiq.ml4j.utils.NDArrayUtils;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
@@ -322,6 +323,16 @@ public class KMedoids {
         }
         
         
+    }
+    
+    /**
+     * Method that remove the point referenced by idx in the stored distance 
+     * matrix and set medoidsIdx=null.
+     * @param idx 
+     */
+    public void removePoint(int idx){
+        distMatrix = NDArrayUtils.remove(NDArrayUtils.remove(distMatrix, idx, 0), idx, 1);
+        medoidsIdx = null;
     }
 
 }
