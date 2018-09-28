@@ -31,7 +31,7 @@ public class EGreedyExponentialDecay implements Policy{
         
         if(mt.nextDouble()<=e){
             //explore
-            rta = mt.nextInt(qValues.length()-1);
+            rta = mt.nextInt(qValues.toDoubleVector().length-1);
             if(rta == idx)
                 rta++; //if rta==idx increment rta by one to avoid best action
         }else{
