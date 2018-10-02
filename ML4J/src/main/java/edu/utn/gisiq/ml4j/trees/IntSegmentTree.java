@@ -12,7 +12,7 @@ import java.util.Arrays;
 import org.nd4j.linalg.util.ArrayUtil;
 
 /**
- * The {@code SegmentTree} class is an structure for efficient search of cummulative data.
+ * The {@code IntSegmentTree} class is an structure for efficient search of cummulative data.
  * It performs  Range Minimum Query and Range Sum Query in O(log(n)) time.
  * It can be easily customizable to support Range Max Query, Range Multiplication Query etc.
  * <p>
@@ -32,7 +32,7 @@ import org.nd4j.linalg.util.ArrayUtil;
  *
  * @author Ricardo Pacheco 
  */
-public class SegmentTree {
+public class IntSegmentTree {
 
     private Node[] heap;
     private int[] array;
@@ -43,7 +43,7 @@ public class SegmentTree {
      *
      * @param array the Initialization array
      */
-    public SegmentTree(int[] array) {
+    public IntSegmentTree(int[] array) {
         this.array = Arrays.copyOf(array, array.length);
         //The max size of this array is about 2 * 2 ^ log2(n) + 1
         size = (int) (2 * Math.pow(2.0, Math.floor((Math.log((double) array.length) / Math.log(2.0)) + 1)));
@@ -51,7 +51,7 @@ public class SegmentTree {
         build(1, 0, array.length);
     }
     
-     public SegmentTree(int maxCapacity) {
+     public IntSegmentTree(int maxCapacity) {
         this.array = new int[maxCapacity];
         Arrays.fill(array, 0);
         //The max size of this array is about 2 * 2 ^ log2(n) + 1
@@ -183,56 +183,6 @@ public class SegmentTree {
         return Integer.MAX_VALUE;
     }
     
-    /**
-     * Range Min Index Query
-     * 
-     * Time-Complexity: O(log(n))
-     *
-     * @param  from from index
-     * @param  to to index
-     * @return min
-     */
-    public int rMinQIdx(int from, int to) {
-        return rMinQIdx(1, from, to);
-    }
-
-    
-    private int rMinQIdx(int v, int from, int to) {
-        Node n = heap[v];
-
-        //If you did a range update that contained this node, you can infer the Min value without going down the tree
-        if (n.pendingVal != null && contains(n.from, n.to, from, to)) {
-            if(n.size()==1){
-             return n.from;    
-            }
-            int leftMinIdx = rMinQIdx(2 * v, from, to);
-            int rightMinIdx = rMinQIdx(2 * v + 1, from, to);
-
-            return array[leftMinIdx]<=array[rightMinIdx]?leftMinIdx:rightMinIdx;
-        }
-
-        if (contains(from, to, n.from, n.to)) {
-            if(n.size()==1){
-             return n.from;    
-            }
-            int leftMinIdx = rMinQIdx(2 * v, from, to);
-            int rightMinIdx = rMinQIdx(2 * v + 1, from, to);
-
-            return array[leftMinIdx]<=array[rightMinIdx]?leftMinIdx:rightMinIdx;
-        }
-
-        if (intersects(from, to, n.from, n.to)) {
-            propagate(v);
-            int leftMinIdx = rMinQIdx(2 * v, from, to);
-            int rightMinIdx = rMinQIdx(2 * v + 1, from, to);
-
-            return array[leftMinIdx]<=array[rightMinIdx]?leftMinIdx:rightMinIdx;
-        }
-
-        return n.min;
-    }
-
-
     /**
      * Range Update Operation.
      * With this operation you can update either one position or a range of positions with a given number.
