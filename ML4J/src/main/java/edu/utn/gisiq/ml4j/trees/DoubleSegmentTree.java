@@ -2,8 +2,8 @@ package edu.utn.gisiq.ml4j.trees;
 
 /**
  * ****************************************************************************
- * Compilation: javac SegmentTree.java Execution: java SegmentTree
- *
+ * Compilation: javac SegmentTree.java 
+ * 
  * A segment tree data structure.
  *
  *****************************************************************************
@@ -11,8 +11,11 @@ package edu.utn.gisiq.ml4j.trees;
 import java.util.Arrays;
 
 /**
- * The {@code SegmentTree} class is an structure for efficient search of
- * cummulative data. It performs Range Minimum Query and Range Sum Query in
+ * The {@code DoubleSegmentTree} class is an structure based on Ricardo Pacheco 
+ * implementation for efficient search of cummulative data
+ * (https://algs4.cs.princeton.edu/99misc/SegmentTree.java.html). 
+ * <p>
+ * It performs Range Minimum Query and Range Sum Query in
  * O(log(n)) time. It can be easily customizable to support Range Max Query,
  * Range Multiplication Query etc.
  * <p>
