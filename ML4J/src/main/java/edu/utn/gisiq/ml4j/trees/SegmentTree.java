@@ -135,7 +135,7 @@ public class SegmentTree {
     }
 
     private int rsqIdx(int v, int prefixsum) {
-        while(heap[v].from != heap[v].to){
+        while(heap[v].size() != 1){
             if(heap[2 * v].sum > prefixsum){
                 v = 2 * v;
             }else{
@@ -162,7 +162,6 @@ public class SegmentTree {
 
     private int rMinQ(int v, int from, int to) {
         Node n = heap[v];
-
 
         //If you did a range update that contained this node, you can infer the Min value without going down the tree
         if (n.pendingVal != null && contains(n.from, n.to, from, to)) {
@@ -201,29 +200,36 @@ public class SegmentTree {
     private int rMinQIdx(int v, int from, int to) {
         Node n = heap[v];
 
-        if (contains(from, to, n.from, n.to)) {            
-            for(int i=n.from;i<n.to;i++)
-                if(array[i]==n.min)
-                    return i;            
+        //If you did a range update that contained this node, you can infer the Min value without going down the tree
+        if (n.pendingVal != null && contains(n.from, n.to, from, to)) {
+            if(n.size()==1){
+             return n.from;    
+            }
+            int leftMinIdx = rMinQIdx(2 * v, from, to);
+            int rightMinIdx = rMinQIdx(2 * v + 1, from, to);
+
+            return array[leftMinIdx]<=array[rightMinIdx]?leftMinIdx:rightMinIdx;
+        }
+
+        if (contains(from, to, n.from, n.to)) {
+            if(n.size()==1){
+             return n.from;    
+            }
+            int leftMinIdx = rMinQIdx(2 * v, from, to);
+            int rightMinIdx = rMinQIdx(2 * v + 1, from, to);
+
+            return array[leftMinIdx]<=array[rightMinIdx]?leftMinIdx:rightMinIdx;
         }
 
         if (intersects(from, to, n.from, n.to)) {
             propagate(v);
             int leftMinIdx = rMinQIdx(2 * v, from, to);
             int rightMinIdx = rMinQIdx(2 * v + 1, from, to);
-            
-            if(array[leftMinIdx]==Integer.MAX_VALUE)
-                return rightMinIdx;
-            if(array[rightMinIdx]==Integer.MAX_VALUE)
-                return leftMinIdx;
-            
-            if(array[leftMinIdx]<=array[rightMinIdx])
-                return leftMinIdx;
-            if(array[leftMinIdx]>array[rightMinIdx])
-                return rightMinIdx;            
+
+            return array[leftMinIdx]<=array[rightMinIdx]?leftMinIdx:rightMinIdx;
         }
 
-        return Integer.MAX_VALUE;
+        return n.min;
     }
 
 
