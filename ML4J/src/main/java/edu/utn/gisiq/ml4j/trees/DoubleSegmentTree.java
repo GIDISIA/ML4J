@@ -186,6 +186,15 @@ public class DoubleSegmentTree {
 
         return Integer.MAX_VALUE;
     }
+    
+    /**
+     * Return the value of the subyacent vector index
+     * @param idx
+     * @return 
+     */
+    public double getValue(int idx){
+        return array[idx];
+    }
 
     /**
      * Range Update Operation. With this operation you can update either one
