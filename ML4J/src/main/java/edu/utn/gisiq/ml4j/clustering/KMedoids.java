@@ -275,8 +275,8 @@ public class KMedoids {
         // create your PlotPanel (you can use it as a JPanel)        
         if(dataset.get(0).isRowVectorOrScalar()){
             Plot2DPanel plot = new Plot2DPanel();
-            double[][] x = new double[dataset.size()][dataset.get(0).length()];          
-            double[][] medoids = new double[medoidsIdx.length][dataset.get(0).getRow(0).length()];      
+            double[][] x = new double[dataset.size()][dataset.get(0).columns()];          
+            double[][] medoids = new double[medoidsIdx.length][dataset.get(0).getRow(0).columns()];      
             // fill x to for plotting
             for(int i=0;i<dataset.size();i++){
                 double[] p = dataset.get(i).toDoubleVector();

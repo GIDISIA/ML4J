@@ -20,7 +20,7 @@ public class NDArrayUtils {
      * @return 
      */
     public static INDArray remove(INDArray array, int idx, int axis){
-        int[] idxs = ArrayUtil.range(0, array.size(axis));
+        long[] idxs = ArrayUtil.range(0, array.size(axis));
         idxs = ArrayUtil.removeIndex(idxs, idx);
         INDArrayIndex range = new SpecifiedIndex(idxs);
             

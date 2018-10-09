@@ -8,6 +8,7 @@ package test;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.impl.indexaccum.IAMax;
 import org.nd4j.linalg.api.ops.impl.indexaccum.IMax;
+import org.nd4j.linalg.api.ops.impl.indexaccum.IMin;
 import org.nd4j.linalg.factory.Nd4j;
 
 /**
@@ -21,10 +22,12 @@ public class IAMaxTest {
      */
     public static void main(String[] args) {
         INDArray r = Nd4j.create(new double[]{0,0,-48,5,0});
-        int idxMin = Nd4j.getExecutioner().execAndReturn(new IMax(r.dup())).getFinalResult(); //Index of max value
-        int idxMax = Nd4j.getExecutioner().execAndReturn(new IAMax(r.dup())).getFinalResult(); //index of max absolute value
+        int idxMin = Nd4j.getExecutioner().execAndReturn(new IMin(r.dup())).getFinalResult(); //Index of min value
+        int idxMax = Nd4j.getExecutioner().execAndReturn(new IMax(r.dup())).getFinalResult(); //Index of max value
+        int idxAMax = Nd4j.getExecutioner().execAndReturn(new IAMax(r.dup())).getFinalResult(); //index of max absolute value
         System.out.println("min:"+idxMin);
         System.out.println("max:"+idxMax);
+        System.out.println("absolute max:"+idxAMax);
     }
     
 }

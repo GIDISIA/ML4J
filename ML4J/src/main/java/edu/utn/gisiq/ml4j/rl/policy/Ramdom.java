@@ -19,9 +19,13 @@ public class Ramdom implements Policy{
     public int chooseAction(INDArray qValues, int episode) {
         return mt.nextInt(qValues.rows());
     }
+    
+    @Override
+    public int chooseAction(INDArray qValues, INDArray maskQValues, int allowedActionCount, int episode) {
+        return mt.nextInt(qValues.rows());
+    }
 
     @Override
     public void finishedEpisode() {    
     }
-    
 }
